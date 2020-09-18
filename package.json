@@ -1,0 +1,22 @@
+{
+  "name": "weather",
+  "version": "1.0.0",
+  "description": "Lebanese weather bot",
+  "main": "bot.js",
+  "scripts": {
+    "start": "node bot.js",
+    "dev": "nodemon bot.js"
+  },
+  "author": "Ahmad Tarabein",
+  "license": "ISC",
+  "devDependencies": {
+    "nodemon": "^2.0.4"
+  },
+  "dependencies": {
+    "dayjs": "^1.8.35",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "node-fetch": "^2.6.1",
+    "twit": "^2.2.11"
+  }
+}

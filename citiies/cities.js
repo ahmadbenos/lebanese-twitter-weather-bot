@@ -1,0 +1,16 @@
+module.exports = {
+  beirut: 276781,
+  saida: 268064,
+  tripoli: 266826,
+  sour: 267008,
+  jezzine: 273360,
+  jounieh: 273140,
+  jbeil: 273203,
+  baalbak: 277130,
+  zahle: 266045,
+  bcharre: 276359,
+  matn: 279854,
+  batroun: 280328,
+  rashaya: 6253857,
+  zgharta: 265846,
+};
