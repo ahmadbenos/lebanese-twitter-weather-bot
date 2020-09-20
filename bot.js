@@ -5,10 +5,16 @@ const PORT = process.env.PORT || 5000;
 const Twit = require("twit");
 const fetch = require("node-fetch");
 const weatherAPI = process.env.WEATHER_API_KEY;
+const dayjs = require("dayjs");
+const localizedFormat = require("dayjs/plugin/localizedFormat");
+dayjs.extend(localizedFormat);
 
+// lsiten to GET requests from uptimerobot.com to keep the bot running 24/7.
 app.get("/", (req, res) => {
   res.send("Bot is running...");
 });
+
+app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
 
 const city = require("./citiies/cities");
 const {
@@ -27,12 +33,6 @@ const {
   rashaya,
   zgharta,
 } = city;
-
-const URL = `https://api.openweathermap.org/data/2.5/weather?q=Sidon&units=metric&appid=${weatherAPI}`;
-const fullURL = `https://api.openweathermap.org/data/2.5/onecall?lat=33.5631&lon=35.3689&exclude=minutely,hourly&units=metric&appid=${weatherAPI}`;
-const dayjs = require("dayjs");
-const localizedFormat = require("dayjs/plugin/localizedFormat");
-dayjs.extend(localizedFormat);
 
 var Twitter = new Twit({
   consumer_key: process.env.API_TWITTER_KEY,
@@ -65,88 +65,50 @@ const randomCities = [
   zgharta,
 ];
 
-const groupURL = `https://api.openweathermap.org/data/2.5/group?id=${beirut},${saida},${tripoli},${zahle},${randomCities[2]},${randomCities[6]}&units=metric&appid=${weatherAPI}`;
+const beiURL = `https://api.openweathermap.org/data/2.5/onecall?${beirut[0]}&exclude=minutely,hourly&units=metric&appid=${weatherAPI}`;
+const sidURL = `https://api.openweathermap.org/data/2.5/onecall?${saida[0]}&exclude=minutely,hourly&units=metric&appid=${weatherAPI}`;
+const triURL = `https://api.openweathermap.org/data/2.5/onecall?${tripoli[0]}&exclude=minutely,hourly&units=metric&appid=${weatherAPI}`;
+const zahURL = `https://api.openweathermap.org/data/2.5/onecall?${zahle[0]}&exclude=minutely,hourly&units=metric&appid=${weatherAPI}`;
 
-// keep checking for time
 setInterval(() => {
   //! date block
   var date = dayjs();
   var now = date.add("3", "hour");
   const currentTime = dayjs(now).format("LTS"); //current time in 12 hour fomrat
   var today = dayjs().format("dddd, MMM D, YYYY"); // current Date
+  //console.log(currentTime, today);
 
-  //! random numbers
+  //! two random numbers
   const random = Math.floor(Math.random() * 8); // random morning msg
   const num1 = Math.floor(Math.random() * 10); // 2 random numbers
   var num2 = Math.floor(Math.random() * 10);
   while (num2 === num1) {
     num2 = Math.floor(Math.random() * 10);
   }
-  console.log(num1, num2);
-  console.log(currentTime, today);
-  const url = `https://api.openweathermap.org/data/2.5/group?id=${beirut},${saida},${tripoli},${zahle},${randomCities[num1]},${randomCities[num2]}&units=metric&appid=${weatherAPI}`;
+  const city1 = randomCities[num1]; // first random city
+  const city2 = randomCities[num2]; // 2nd random city
 
-  //cities that will be in the tweet
-  const tweetCities = [
-    beirut,
-    saida,
-    tripoli,
-    zahle,
-    randomCities[num1],
-    randomCities[num2],
-  ];
-  if (currentTime === "8:30:14 AM" || currentTime === "8:30:15 AM") {
-    fetch(url)
-      .then((res) => res.json())
+  const tweetCities = [beirut, saida, tripoli, zahle, city1, city2];
+
+  const randomURL1 = `https://api.openweathermap.org/data/2.5/onecall?${city1[0]}&exclude=minutely,hourly&units=metric&appid=${weatherAPI}`;
+  const randomURL2 = `https://api.openweathermap.org/data/2.5/onecall?${city2[0]}&exclude=minutely,hourly&units=metric&appid=${weatherAPI}`;
+
+  if (currentTime === "3:31:44 AM" || currentTime === "3:31:45 AM") {
+    Promise.all([
+      fetch(beiURL).then((res) => res.json()),
+      fetch(sidURL).then((res) => res.json()),
+      fetch(triURL).then((res) => res.json()),
+      fetch(zahURL).then((res) => res.json()),
+      fetch(randomURL1).then((res) => res.json()),
+      fetch(randomURL2).then((res) => res.json()),
+    ])
       .then((body) => {
-        // code for everything inside tweet
         const text = tweetCities.map((city, index) => {
-          var cityName = body.list[index].name;
-          switch (cityName) {
-            case "Tyre":
-              cityName = "Sour";
-              break;
-
-            case "Sidon":
-              cityName = "Saida";
-              break;
-
-            case "Jezzîne":
-              cityName = "Jezzine";
-              break;
-
-            case "Byblos":
-              cityName = "Jbeil";
-              break;
-
-            case "Baalbek":
-              cityName = "Baalbak";
-              break;
-
-            case "Bcharré":
-              cityName = "Bcharre";
-              break;
-
-            case "Jdaidet el Matn":
-              cityName = "Matn";
-              break;
-
-            case "Batroûn":
-              cityName = "Batroun";
-              break;
-
-            case "Râchaïya el Ouadi":
-              cityName = "Rashaya";
-              break;
-
-            case "Zghartā":
-              cityName = "Zgharta";
-              break;
-          }
-          const cityHigh = Math.round(body.list[index].main.temp_max);
-          const cityLow = Math.round(body.list[index].main.temp_min);
-          const cityStatus = body.list[index].weather[0].main;
-          const cityDescription = body.list[index].weather[0].description;
+          const cityName = city[1];
+          const cityHigh = Math.round(body[index].daily[0].temp.max);
+          const cityLow = Math.round(body[index].daily[0].temp.min);
+          const cityStatus = body[index].daily[0].weather[0].main;
+          const cityDescription = body[index].daily[0].weather[0].description;
           var emoji;
           // check the status to set the emoji
           if (cityStatus === "Clear") {
@@ -182,7 +144,6 @@ setInterval(() => {
           ) {
             emoji = "💨";
           }
-
           const cityText =
             "- " +
             cityName +
@@ -198,6 +159,7 @@ setInterval(() => {
           return cityText;
         });
         // console.log(text);
+        //Tweet
         Twitter.post("statuses/update", {
           status:
             morningMessages[random] +
@@ -217,18 +179,10 @@ setInterval(() => {
             text[5],
         });
       })
-      .catch((err) => console.log(err));
+      .catch((err) => {
+        console.log(err);
+      });
   } else {
     return;
   }
 }, 2000);
-
-app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
-
-/* fetch(groupURL)
-  .then((res) => res.json())
-  .then((body) => {
-    // get sidon weather
-    console.log(body.list[0]);
-  })
-  .catch((err) => console.log(err));*/
