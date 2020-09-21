@@ -1,4 +1,5 @@
 # lebanese-twitter-weather-bot
+Package used for twitter API: <b> Twit</b>
 <h1>twitter: @lebweatherbot</h1>
 Using the https://openweathermap.org API
 
